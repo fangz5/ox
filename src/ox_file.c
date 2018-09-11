@@ -42,3 +42,34 @@ int ox__file_destroy(const char *pathname)
 	}
 	return 0;
 }
+
+int ox__save_page(const ox__file_t *file, const void *page_content)
+{
+	if (fsetpos(file->fptr, PAGE_SIZE * file->num_pages) != 0) {
+		perror("File Position Error");
+		return -1;
+	}
+	if (fwrite(page_content, PAGE_SIZE, 1, file->fptr) != 0) {
+		perror("File Writing Error");
+		return -1;
+	}
+	return 0;
+}
+
+int ox__read_page(const ox__file_t *file, const int page_number, void *page_content)
+{
+	if (page_number > file->num_pages) {
+		printf("File Reading Error: Page number %d is greater total page number %d.\n", 
+			page_number, file->num_pages);
+		return -1;
+	}
+	if (fsetpos(file->fptr, PAGE_SIZE * (page_number - 1)) != 0) {
+		perror("File Position Error");
+		return -1;
+	}
+	if (fread(page_content, PAGE_SIZE, 1, file->fptr) != 0) {
+		perror("File Reading Error");
+		return -1;
+	}
+	return 0;
+}
