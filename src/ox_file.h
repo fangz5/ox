@@ -3,12 +3,12 @@
 #ifndef _OX_FILE_H
 #define _OX_FILE_H
 
+#define PAGE_SIZE 4096 * 2
+
 typedef struct {
 	FILE *fptr;
 	int num_pages;
 } ox__file_t;
-
-const int PAGE_SIZE = 4096 * 4;
 
 int ox__file_create(ox__file_t *file, const char *pathname);
 

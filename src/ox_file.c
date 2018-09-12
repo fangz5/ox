@@ -1,10 +1,16 @@
 #include "ox_file.h"
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 
 
 int ox__file_create(ox__file_t *file, const char *pathname)
 {
+	if (access(pathname, F_OK) == 0) {
+		printf("Error Creating File: %s exists!\n", pathname);
+		return -1;
+	}
+
 	FILE *file_ptr = fopen(pathname, "w");
 	if (file_ptr == NULL) {
       	perror("Open File Error");
@@ -36,9 +42,11 @@ int ox__file_close(const ox__file_t *file)
 
 int ox__file_destroy(const char *pathname)
 {
-	if (remove(pathname) != 0) {
-      	perror("Destroy File Error");
-      	return -1;		
+	if (access(pathname, F_OK) == 0) {
+		if (remove(pathname) != 0) {
+      		perror("Destroy File Error");
+      		return -1;		
+		}
 	}
 	return 0;
 }
@@ -50,7 +58,8 @@ int ox__save_page(const ox__file_t *file, const void *page_content)
 		perror("File Position Error");
 		return -1;
 	}
-	if (fwrite(page_content, PAGE_SIZE, 1, file->fptr) != 0) {
+	// On success, fwrite return # of items written. Here we write 1 "page".
+	if (fwrite(page_content, PAGE_SIZE, 1, file->fptr) != 1) {
 		perror("File Writing Error");
 		return -1;
 	}
@@ -59,17 +68,12 @@ int ox__save_page(const ox__file_t *file, const void *page_content)
 
 int ox__read_page(const ox__file_t *file, const int page_number, void *page_content)
 {
-	if (page_number > file->num_pages) {
-		printf("File Reading Error: Page number %d is greater total page number %d.\n", 
-			page_number, file->num_pages);
-		return -1;
-	}		
 	fpos_t pos = PAGE_SIZE * (page_number - 1);
 	if (fsetpos(file->fptr, &pos) != 0) {
 		perror("File Position Error");
 		return -1;
 	}
-	if (fread(page_content, PAGE_SIZE, 1, file->fptr) != 0) {
+	if (fread(page_content, PAGE_SIZE, 1, file->fptr) != 1) {
 		perror("File Reading Error");
 		return -1;
 	}
