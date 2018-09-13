@@ -20,9 +20,9 @@ int ox__file_create(ox__file_t *file, const char *pathname)
 	return 0;
 }
 
-int ox__file_open(ox__file_t *file, const char *pathname)
+int ox__file_open(ox__file_t *file, const char *pathname, const char *mode)
 {
-	FILE *file_ptr = fopen(pathname, "r");
+	FILE *file_ptr = fopen(pathname, mode);
 	if (file_ptr == NULL) {
       	perror("Open File Error");
       	return -1;
@@ -51,31 +51,40 @@ int ox__file_destroy(const char *pathname)
 	return 0;
 }
 
-int ox__save_page(const ox__file_t *file, const void *page_content)
+int ox__save_page(const ox__file_t *file, const void *page, const int page_number)
 {
-	fpos_t pos = PAGE_SIZE * file->num_pages;
+	fpos_t pos = PAGE_SIZE * page_number;
 	if (fsetpos(file->fptr, &pos) != 0) {
 		perror("File Position Error");
 		return -1;
 	}
-	// On success, fwrite return # of items written. Here we write 1 "page".
-	if (fwrite(page_content, PAGE_SIZE, 1, file->fptr) != 1) {
+	return ox__save_next_page(file, page);
+}
+
+int ox__save_next_page(const ox__file_t *file, const void *page)
+{
+	if (fwrite(page, PAGE_SIZE, 1, file->fptr) != 1) {
 		perror("File Writing Error");
 		return -1;
 	}
-	return 0;
+	return 0;	
 }
 
-int ox__read_page(const ox__file_t *file, const int page_number, void *page_content)
+int ox__read_page(const ox__file_t *file, const int page_number, void *page)
 {
-	fpos_t pos = PAGE_SIZE * (page_number - 1);
+	fpos_t pos = PAGE_SIZE * page_number;
 	if (fsetpos(file->fptr, &pos) != 0) {
 		perror("File Position Error");
 		return -1;
 	}
-	if (fread(page_content, PAGE_SIZE, 1, file->fptr) != 1) {
+	return ox__read_next_page(file, page);
+}
+
+int ox__read_next_page(const ox__file_t *file, void *page)
+{
+	if (fread(page, PAGE_SIZE, 1, file->fptr) != 1) {
 		perror("File Reading Error");
 		return -1;
 	}
-	return 0;
+	return 0;	
 }

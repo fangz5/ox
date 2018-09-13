@@ -21,7 +21,7 @@ static char *test_file_create() {
 
 static char *test_file_open() {
 	mu_assert("ERROR(file_open): unable to open file.", 
-		0 == ox__file_open(&file_handle, test_dataset));
+		0 == ox__file_open(&file_handle, test_dataset, "r"));
 	return 0;
 }
 
