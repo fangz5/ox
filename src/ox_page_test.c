@@ -5,12 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 int tests_run = 0;
 ox__file_t file_handle;
 
-const char test_dataset[] = "test_dataset";
-const int num_pages = 100;
+static const char test_dataset[] = "test_dataset";
+static const int num_pages = 100;
 
 static char *test_page_write() {
 	mu_assert("ERROR(file_create): unable to create file.", 
@@ -50,11 +51,9 @@ static char *test_page_read() {
 	int size_of_int = sizeof(int);
 	const int M = PAGE_SIZE / size_of_int;
 
-	int x;
-	for (int j = 0; j < num_pages; j++) {
-		mu_assert("ERROR(page_read): unable to read page.", 
-			0 == ox__read_next_page(&file_handle, page_content));
-
+	int x, j;
+	j = 0;
+	while (ox__read_next_page(&file_handle, page_content) == 0) {
 		for (int i = 0; i < M; i++) {
 			memcpy((void *)&x, page_content + i * size_of_int, size_of_int);
 			if (j != 1) {
@@ -66,7 +65,10 @@ static char *test_page_read() {
 					x == -1);
 			}
 		}
+		j++;
 	}
+
+	mu_assert("ERROR(page_read): not all pages are read.\n", j == num_pages);
 
 	mu_assert("ERROR(file_close): unable to create file.", 
 		0 == ox__file_close(&file_handle));
